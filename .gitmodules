@@ -1,0 +1,9 @@
+[submodule "tensorflow"]
+	path = tensorflow
+	url = https://github.com/tensorflow/tensorflow.git
+[submodule "ArduinoCore-avr"]
+	path = ArduinoCore-avr
+	url = https://github.com/arduino/ArduinoCore-avr.git
+[submodule "Arduboy2"]
+	path = Arduboy2
+	url = https://github.com/MLXXXp/Arduboy2.git

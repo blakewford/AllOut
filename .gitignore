@@ -1,0 +1,10 @@
+tools/gen
+.vscode
+rush
+avr-rush
+rush.hex
+.vs
+hpc/Debug
+hpc/Release
+lan/Monitor
+lan/*.png
