@@ -6,6 +6,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "../engine/color.h"
+
 const char* DEFAULT_MODEL = "../assets/car.stl";
 
 int32_t cachedArgc = 0;
@@ -62,8 +64,9 @@ void uncompressed()
     printf("};");
 }
 
-void compressed()
+int32_t compressed()
 {
+    int size = 0;
     std::ifstream sample(cachedArgc > 1 ? cachedArgv[1]: DEFAULT_MODEL);
 
     printHeader();
@@ -114,6 +117,7 @@ void compressed()
     printf("};");
 
     ndx = 1; //Reset past size
+    size = verts.size()/3;
     printf("\n\nconst float ndxToValue[] =\n{\n    ");
     printf("%.2f, ", (float)verts.size()/3);
     std::unordered_map<float,uint8_t>::iterator iter = values.begin();
@@ -131,6 +135,7 @@ void compressed()
     }
 
     printf("\n};\n");
+    return size;
 }
 
 int main(int argc, char** argv)
@@ -146,5 +151,16 @@ int main(int argc, char** argv)
     }
 
 //    uncompressed();
-    compressed();
+    int32_t size = compressed();
+
+    printf("\n");
+    printf("const uint8_t PROGMEM fill[] =\n{\n");
+
+    int32_t i = 0;
+    while(i < size)
+    {
+        printf("    %d,\n", 0xFF);
+        i++;
+    }
+    printf("};\n");
 }

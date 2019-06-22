@@ -33,7 +33,7 @@ class Models
 public:
     static void begin();
     static void drawModel(const float* model, int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t color);
-    static void drawCompressedModel(const uint8_t* model, const float* map, int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t color);
+    static void drawCompressedModel(const uint8_t* model, const float* map, const uint8_t* fill, int16_t xAngle, int16_t yAngle, int16_t zAngle);
 
 private:
 

@@ -166,27 +166,51 @@ void Models::drawModel(const float* model, int16_t xAngle, int16_t yAngle, int16
     drawModel(xAngle, yAngle, zAngle, color);
 }
 
-void Models::drawCompressedModel(const uint8_t* model, const float* map, int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t color)
+void Models::drawCompressedModel(const uint8_t* model, const float* map, const uint8_t* fill, int16_t xAngle, int16_t yAngle, int16_t zAngle)
 {
     int16_t count = (int16_t)map[0];
     count*=3;
     gReportedVerts += count;
 
     copy[0] = 3;
-    int16_t ndx = 0;
-    while(ndx < count)
+
+    bool reverse = (yAngle%360 < 90) || (yAngle%360 > 270);
+    int16_t ndx = reverse ? 0: count-1;
+    if(reverse)
     {
-        copy[1] = map[pgm_read_byte(&model[ndx])];
-        copy[2] = map[pgm_read_byte(&model[ndx+1])];
-        copy[3] = map[pgm_read_byte(&model[ndx+2])];
-        copy[4] = map[pgm_read_byte(&model[ndx+3])];
-        copy[5] = map[pgm_read_byte(&model[ndx+4])];
-        copy[6] = map[pgm_read_byte(&model[ndx+5])];
-        copy[7] = map[pgm_read_byte(&model[ndx+6])];
-        copy[8] = map[pgm_read_byte(&model[ndx+7])];
-        copy[9] = map[pgm_read_byte(&model[ndx+8])];
-        drawModel(xAngle, yAngle, zAngle, color);
-        ndx+=9;
+        while(ndx < count)
+        {
+            copy[1] = map[pgm_read_byte(&model[ndx])];
+            copy[2] = map[pgm_read_byte(&model[ndx+1])];
+            copy[3] = map[pgm_read_byte(&model[ndx+2])];
+            copy[4] = map[pgm_read_byte(&model[ndx+3])];
+            copy[5] = map[pgm_read_byte(&model[ndx+4])];
+            copy[6] = map[pgm_read_byte(&model[ndx+5])];
+            copy[7] = map[pgm_read_byte(&model[ndx+6])];
+            copy[8] = map[pgm_read_byte(&model[ndx+7])];
+            copy[9] = map[pgm_read_byte(&model[ndx+8])]; 
+            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
+            ndx+=9;
+        }
+    }
+    else
+    {
+        yAngle += 270;
+        while(ndx >= 0)
+        {
+            copy[1] = map[pgm_read_byte(&model[ndx])];
+            copy[2] = map[pgm_read_byte(&model[ndx-1])];
+            copy[3] = map[pgm_read_byte(&model[ndx-2])];
+            copy[4] = map[pgm_read_byte(&model[ndx-3])];
+            copy[5] = map[pgm_read_byte(&model[ndx-4])];
+            copy[6] = map[pgm_read_byte(&model[ndx-5])];
+            copy[7] = map[pgm_read_byte(&model[ndx-6])];
+            copy[8] = map[pgm_read_byte(&model[ndx-7])];
+            copy[9] = map[pgm_read_byte(&model[ndx-8])];
+    
+            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
+            ndx-=9;
+        }
     }
 }
 
@@ -269,6 +293,6 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t c
         int16_t y3 = copy[current++] + offsetY;
         current++;
 
-        fillTriangle(x1, y1, x2, y2, x3, y3, 0xA);
-    }
+        fillTriangle(x1, y1, x2, y2, x3, y3, color);
+    }  
 }

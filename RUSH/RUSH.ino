@@ -69,7 +69,7 @@ void selection()
     }
 
 //    models.drawModel(obj, 15, yAngle, 0, 1);
-    models.drawCompressedModel(vehicle, modelMap, 15, yAngle, 0, 0xFF);
+    models.drawCompressedModel(vehicle, modelMap, fillCar, 15, yAngle, 0);
     sprites.drawSelfMasked(3, 16, left, 0);
     sprites.drawSelfMasked(93, 16, right, 0);
     sprites.drawSelfMasked(43, 56, name, 0);
