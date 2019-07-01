@@ -2,10 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
+#include <cmath>
 
 #include <vector>
 #include <unordered_map>
 
+#include "bmpconstants.h"
 #include "../engine/color.h"
 
 const char* DEFAULT_MODEL = "../assets/car.stl";
@@ -138,6 +140,62 @@ int32_t compressed()
     return size;
 }
 
+void generateTexture(uint8_t* texture, int32_t width, int32_t height)
+{
+    const int16_t depth = 32;
+    const int16_t planes = 1;
+    const int32_t offset = 54;
+    const int32_t remaining = 40;
+    const int32_t resolution = 2835;
+    const int32_t dataSize = ((width*height)*4);
+    const int32_t headerHeight = -height;
+
+    int32_t size = dataSize + offset;
+
+    texture[BSpace] = 'B';
+    texture[MSpace] = 'M';
+    memcpy(&texture[BEGINBMPSZ], &size, sizeof(int32_t));
+    //Write 0x00 to app specific Space
+    memset(&texture[BEGINAPPSPACE], 0, sizeof(int32_t));
+    memcpy(&texture[BEGINPXLOFFSET], &offset, sizeof(int32_t));
+    memcpy(&texture[BEGINHDRREM], &remaining, sizeof(int32_t));
+    memcpy(&texture[BEGINWIDTH], &width, sizeof(int32_t));
+    memcpy(&texture[BEGINHEIGHT], &headerHeight, sizeof(int32_t));
+    memcpy(&texture[BEGINPLANES], &planes, sizeof(int16_t));
+    memcpy(&texture[BEGINDEPTH], &depth, sizeof(int16_t));
+    memset(&texture[BEGINBI_RGB], 0, sizeof(int32_t));
+    memcpy(&texture[BEGINRAWDATASZ], &dataSize, sizeof(int32_t));
+    memcpy(&texture[BEGINHORRES], &resolution, sizeof(int32_t));
+    memcpy(&texture[BEGINVERRES], &resolution, sizeof(int32_t));
+    memset(&texture[BEGINPALCOLORS], 0, sizeof(int32_t));
+    memset(&texture[BEGINIMPCOLORS], 0, sizeof(int32_t));
+
+    int32_t tempHeight = --height;
+    while(tempHeight > 0)
+    {
+        memset(&texture[offset+(tempHeight*width*4)], 0xFF, width*4);
+        tempHeight-=5;
+    }
+
+    int32_t tempWidth = width-1;
+    while(height > 0)
+    {
+        memset(&texture[offset+(height*width*4)], 0xFF, 4);
+        while(tempWidth > 0)
+        {
+            memset(&texture[offset+(height*width*4)+(tempWidth*4)], 0xFF, 4);
+            tempWidth-=5;
+        }
+
+        tempWidth = width;
+        height--;
+    }
+
+    FILE* file = fopen("skin.bmp", "w");
+    fwrite(texture, 1, size, file);
+    fclose(file);
+}
+
 int main(int argc, char** argv)
 {
     cachedArgc = argc;
@@ -163,4 +221,38 @@ int main(int argc, char** argv)
         i++;
     }
     printf("};\n");
+
+    float dim = ceil(sqrt(size));
+    ((int)dim%2) == 0 ? dim: dim++;
+    dim*=5;
+
+    int32_t dataSize = 54 + (dim*dim*4);
+    uint8_t* texture = new uint8_t[dataSize];
+
+    FILE* skin = nullptr;
+    if(cachedArgc > 2) skin = fopen(cachedArgv[2],"rb");
+    if(skin)
+    {
+        fseek(skin, 0, SEEK_END);
+        int32_t size = ftell(skin);
+        rewind(skin);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, skin);
+        if(read != size) return -1;
+        fclose(skin);
+
+        const int32_t middle = ((size/2) - 54 + 4 + (int32_t)dim);
+        printf("0x%X\n", binary[middle + 0*5 + 0*5]);
+
+        free(binary);
+        binary = nullptr;
+    }
+    else
+    {
+        memset(texture, 0 , dataSize);
+        generateTexture(texture, dim, dim);
+    }
+
+    delete[] texture;
+    texture = nullptr;
 }
