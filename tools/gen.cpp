@@ -196,23 +196,28 @@ void generateTexture(uint8_t* texture, int32_t width, int32_t height)
     fclose(file);
 }
 
-void spiral()
+void printBitmapColor(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t offsetX, int32_t offsetY)
+{
+    int32_t start = middle + (offsetX*4)*5 + ((dim*4)*offsetY)*5;
+    printf("    0x%X,\n", bitmap[start+3] << 16 | bitmap[start+2] << 8 | bitmap[start+1]);
+}
+
+void spiral(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t total)
 {
     int32_t offsetX = 0;
     int32_t offsetY = 0;
     int32_t tempX = 1;
     int32_t tempY = 1;
 
-    int32_t total = 400;
     while(total > 0)
     {
 //        printf("RIGHT\n");
         offsetX++;
         tempY--;
 
-        while(tempX <= offsetX)
+        while(total > 0 && tempX <= offsetX)
         {
-            printf("%d %d\n", tempX, tempY);
+            printBitmapColor(bitmap, middle, dim, tempX, tempY);
             total--;
             tempX++;
         }
@@ -222,9 +227,9 @@ void spiral()
         tempY--;
         offsetY++;
         offsetY = -offsetY;
-        while(tempY >= offsetY)
+        while(total > 0 && tempY >= offsetY)
         {
-            printf("%d %d\n", tempX, tempY);
+            printBitmapColor(bitmap, middle, dim, tempX, tempY);
             total--;
             tempY--;
         }
@@ -235,9 +240,9 @@ void spiral()
         tempX--;
         offsetX++;
         offsetX = -offsetX;
-        while(tempX > offsetX)
+        while(total > 0 && tempX > offsetX)
         {
-            printf("%d %d\n", tempX, offsetY);
+            printBitmapColor(bitmap, middle, dim, tempX, offsetY);
             total--;
             tempX--;
         }
@@ -249,9 +254,9 @@ void spiral()
         tempY++;
         offsetY = -offsetY;
         offsetY++;
-        while(tempY < offsetY)
+        while(total > 0 && tempY < offsetY)
         {
-            printf("%d %d\n", tempX, tempY);
+            printBitmapColor(bitmap, middle, dim, tempX, tempY);
             total--;
             tempY++;
         }
@@ -276,24 +281,14 @@ int main(int argc, char** argv)
 
 //    uncompressed();
     int32_t size = compressed();
+    const int32_t requiredTiles = size;
 
     printf("\n");
     printf("const uint8_t PROGMEM fill[] =\n{\n");
 
-    int32_t i = 0;
-    while(i < size)
-    {
-        printf("    %d,\n", 0xFF);
-        i++;
-    }
-    printf("};\n");
-
-    float dim = ceil(sqrt(size));
+    float dim = ceil(sqrt(size)) + 2;
     ((int)dim%2) == 0 ? dim: dim++;
     dim*=5;
-
-    int32_t dataSize = 54 + (dim*dim*4);
-    uint8_t* texture = new uint8_t[dataSize];
 
     FILE* skin = nullptr;
     if(cachedArgc > 2) skin = fopen(cachedArgv[2],"rb");
@@ -309,19 +304,32 @@ int main(int argc, char** argv)
 
         int32_t offsetX = 0;
         int32_t offsetY = 0;
-        const int32_t middle = ((size- 54)/2) + 54;
+        int32_t pixelOffset = binary[BEGINPXLOFFSET];
+        const int32_t middle = ((size - pixelOffset)/2) + pixelOffset + (2*(dim*4)) + (dim*2) + 4;
 
-//        spiral();
+        spiral(binary, middle, dim, requiredTiles);
 
         free(binary);
         binary = nullptr;
     }
     else
     {
+        int32_t i = 0;
+        while(i < size)
+        {
+            printf("    %d,\n", 0xFF);
+            i++;
+        }
+
+        int32_t dataSize = 54 + (dim*dim*4);
+        uint8_t* texture = new uint8_t[dataSize];
+
         memset(texture, 0 , dataSize);
         generateTexture(texture, dim, dim);
+
+        delete[] texture;
+        texture = nullptr;
     }
 
-    delete[] texture;
-    texture = nullptr;
+    printf("};\n");
 }
