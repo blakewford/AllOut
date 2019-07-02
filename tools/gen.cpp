@@ -196,6 +196,72 @@ void generateTexture(uint8_t* texture, int32_t width, int32_t height)
     fclose(file);
 }
 
+void spiral()
+{
+    int32_t offsetX = 0;
+    int32_t offsetY = 0;
+    int32_t tempX = 1;
+    int32_t tempY = 1;
+
+    int32_t total = 400;
+    while(total > 0)
+    {
+//        printf("RIGHT\n");
+        offsetX++;
+        tempY--;
+
+        while(tempX <= offsetX)
+        {
+            printf("%d %d\n", tempX, tempY);
+            total--;
+            tempX++;
+        }
+
+//        printf("UP\n");
+        tempX--;
+        tempY--;
+        offsetY++;
+        offsetY = -offsetY;
+        while(tempY >= offsetY)
+        {
+            printf("%d %d\n", tempX, tempY);
+            total--;
+            tempY--;
+        }
+
+//        printf("LEFT\n");
+
+        tempX = offsetX;
+        tempX--;
+        offsetX++;
+        offsetX = -offsetX;
+        while(tempX > offsetX)
+        {
+            printf("%d %d\n", tempX, offsetY);
+            total--;
+            tempX--;
+        }
+
+//        printf("DOWN\n");
+
+        tempX++;
+        tempY = offsetY;
+        tempY++;
+        offsetY = -offsetY;
+        offsetY++;
+        while(tempY < offsetY)
+        {
+            printf("%d %d\n", tempX, tempY);
+            total--;
+            tempY++;
+        }
+        offsetX = -offsetX;
+        offsetX--;
+        offsetY--;
+        tempX++;
+    }
+}
+
 int main(int argc, char** argv)
 {
     cachedArgc = argc;
@@ -241,8 +307,11 @@ int main(int argc, char** argv)
         if(read != size) return -1;
         fclose(skin);
 
-        const int32_t middle = ((size/2) - 54 + 4 + (int32_t)dim);
-        printf("0x%X\n", binary[middle + 0*5 + 0*5]);
+        int32_t offsetX = 0;
+        int32_t offsetY = 0;
+        const int32_t middle = ((size- 54)/2) + 54;
+
+//        spiral();
 
         free(binary);
         binary = nullptr;
