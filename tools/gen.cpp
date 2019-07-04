@@ -173,17 +173,17 @@ void generateTexture(uint8_t* texture, int32_t width, int32_t height)
     int32_t tempHeight = --height;
     while(tempHeight > 0)
     {
-        memset(&texture[offset+(tempHeight*width*4)], 0xFF, width*4);
+//        memset(&texture[offset+(tempHeight*width*4)], 0xFF, width*4);
         tempHeight-=5;
     }
 
     int32_t tempWidth = width-1;
     while(height > 0)
     {
-        memset(&texture[offset+(height*width*4)], 0xFF, 4);
+//        memset(&texture[offset+(height*width*4)], 0xFF, 4);
         while(tempWidth > 0)
         {
-            memset(&texture[offset+(height*width*4)+(tempWidth*4)], 0xFF, 4);
+ //           memset(&texture[offset+(height*width*4)+(tempWidth*4)], 0xFF, 4);
             tempWidth-=5;
         }
 
@@ -199,7 +199,22 @@ void generateTexture(uint8_t* texture, int32_t width, int32_t height)
 void printBitmapColor(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t offsetX, int32_t offsetY)
 {
     int32_t start = middle + (offsetX*4)*5 + ((dim*4)*offsetY)*5;
-    printf("    0x%X,\n", bitmap[start+3] << 16 | bitmap[start+2] << 8 | bitmap[start+1]);
+    int32_t skinColor = bitmap[start+3] << 16 | bitmap[start+2] << 8 | bitmap[start+1];
+
+    int32_t ndx = -1;
+    int32_t leastDiff = 0x7FFFFFFF;
+    int32_t numColors = sizeof(color)/sizeof(int32_t);
+    while(numColors--)
+    {
+        int32_t diff = std::abs(skinColor - color[numColors]);
+        if(diff < leastDiff)
+        {
+            leastDiff = diff;
+            ndx = numColors;
+        }
+    }
+
+    printf("    %d,\n", ndx);
 }
 
 void spiral(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t total)
