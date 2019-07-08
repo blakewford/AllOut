@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include <vector>
+#include <algorithm>
 #include <unordered_map>
 
 #include "bmpconstants.h"
@@ -15,6 +16,102 @@ const char* DEFAULT_MODEL = "../assets/car.stl";
 int32_t cachedArgc = 0;
 char argvStorage[1024];
 char* cachedArgv[64];
+
+struct point
+{
+    float x;
+    float y;
+    float z;
+};
+
+struct triangle
+{
+    point* a;
+    point* b;
+    point* c;
+
+    void clear()
+    {
+        a = nullptr;
+        b = nullptr;
+        c = nullptr;
+    }
+};
+
+bool lowerZOrder(triangle a, triangle b)
+{
+    return ((a.a->z + a.b->z + a.c->z)/3) < ((b.a->z + b.b->z + b.c->z)/3);
+}
+
+void reorder(std::vector<float>& verts)
+{
+    std::ifstream sample(cachedArgc > 1 ? cachedArgv[1]: DEFAULT_MODEL);
+    std::vector<triangle> triangles;
+
+    triangle t;
+    std::string line;
+    t.clear();
+
+    while(std::getline(sample, line))
+    {
+        std::istringstream iss(line);
+        if(line.find("vertex") != std::string::npos)
+        {
+            char stlSyntax[32];
+            strcpy(stlSyntax, line.c_str());
+
+            char* token = strtok(stlSyntax," ");
+            token = strtok (nullptr, " "); //Remove word vertex
+            while(token != nullptr)
+            {
+                point* p = new point();
+                p->x = atof(token);
+                token = strtok(nullptr, " ");
+
+                p->y = atof(token);
+                token = strtok(nullptr, " ");
+
+                p->z = atof(token);
+                token = strtok(nullptr, " ");
+
+                if(t.a == nullptr)
+                {
+                    t.a = p;
+                }
+                else if(t.b == nullptr)
+                {
+                    t.b = p;
+                }
+                else if(t.c == nullptr)
+                {
+                    t.c = p;
+                }
+                else
+                {
+                    triangles.push_back(t);
+                    t.clear();
+                    t.a = p;
+                }
+            }
+        }
+    }
+
+    triangles.push_back(t);
+    std::sort(triangles.begin(), triangles.end(), lowerZOrder);
+
+    for(std::vector<triangle>::iterator iter = triangles.begin(); iter != triangles.end(); iter++)
+    {
+        verts.push_back(iter->a->x);
+        verts.push_back(iter->a->y);
+        verts.push_back(iter->a->z);
+        verts.push_back(iter->b->x);
+        verts.push_back(iter->b->y);
+        verts.push_back(iter->b->z);
+        verts.push_back(iter->c->x);
+        verts.push_back(iter->c->y);
+        verts.push_back(iter->c->z);
+    }
+}
 
 void printHeader()
 {
@@ -66,7 +163,7 @@ void uncompressed()
     printf("};");
 }
 
-int32_t compressed()
+int32_t compressed(std::vector<float>& verts)
 {
     int size = 0;
     std::ifstream sample(cachedArgc > 1 ? cachedArgv[1]: DEFAULT_MODEL);
@@ -75,53 +172,31 @@ int32_t compressed()
     printf("const uint8_t PROGMEM obj[] =\n{\n");
 
     int32_t ndx = 1; //Save space for size
-    std::vector<float> verts;
+    std::vector<float> vertNdx;
     std::unordered_map<float, uint8_t> values;
 
-    std::string line;
-    while(std::getline(sample, line))
+    for(std::vector<float>::iterator iter = verts.begin(); iter != verts.end(); iter++)
     {
-        std::istringstream iss(line);
-        if(line.find("vertex") != std::string::npos)
-        {
-            char stlSyntax[32];
-            strcpy(stlSyntax, line.c_str());
-
-            char* token = strtok(stlSyntax," ");
-            token = strtok (nullptr, " "); //Remove word vertex
-            while(token != nullptr)
-            {
-                auto result = values.insert(std::make_pair<float, uint8_t>(atof(token), ndx));
-                verts.push_back(result.first->second);
-                if(result.second) ndx++;
-                token = strtok(nullptr, " ");
-
-                result = values.insert(std::make_pair<float, uint8_t>(atof(token), ndx));
-                verts.push_back(result.first->second);
-                if(result.second) ndx++;
-                token = strtok(nullptr, " ");
-
-                result = values.insert(std::make_pair<float, uint8_t>(atof(token), ndx));
-                verts.push_back(result.first->second);
-                if(result.second) ndx++;
-                token = strtok(nullptr, " ");
-            }
-        }
+        auto result = values.insert(std::make_pair(*iter, ndx));
+        vertNdx.push_back(result.first->second);
+        if(result.second) ndx++;
     }
 
-    for(std::vector<float>::iterator iter = verts.begin(); iter != verts.end();)
+    for(std::vector<float>::iterator iter = vertNdx.begin(); iter != vertNdx.end();)
     {
         printf("    %.0f,", *iter++);
         printf("    %.0f,", *iter++);
-        printf("    %.0f,\n", *iter++);
+        printf("    %.0f,", *iter++);
+
+        printf("\n");
     }
 
     printf("};");
 
     ndx = 1; //Reset past size
-    size = verts.size()/3;
+    size = vertNdx.size()/3;
     printf("\n\nconst float ndxToValue[] =\n{\n    ");
-    printf("%.2f, ", (float)verts.size()/3);
+    printf("%.2f, ", (float)size);
     std::unordered_map<float,uint8_t>::iterator iter = values.begin();
     while(values.size() > 0)
     {
@@ -294,8 +369,11 @@ int main(int argc, char** argv)
         storagePointer+=(length+1);
     }
 
+    std::vector<float> verts;
+    reorder(verts);
+
 //    uncompressed();
-    int32_t size = compressed();
+    int32_t size = compressed(verts);
     const int32_t requiredTiles = size;
 
     printf("\n");

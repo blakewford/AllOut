@@ -44,32 +44,37 @@ void selection()
     float* modelMap = nullptr;
     uint8_t* vehicle = nullptr;
     uint8_t* name = nullptr;
+    uint8_t* fill = nullptr;
     switch(gSelection)
     {
         case 0:
             vehicle = car;
             modelMap = ndxToValueCar;
             name = overland;
+            fill = fillCar;
             break;
         case 1:
             vehicle = truck;
             modelMap = ndxToValueTruck;
             name = baja;
+            fill = fillTruck;
             break;
         case 2:
             vehicle = bus;
             modelMap = ndxToValueBus;
             name = burningman;
+            fill = fillCar;
             break;
         case 3:
             vehicle = bike;
             modelMap = ndxToValueBike;
             name = moto;
+            fill = fillCar;
             break;
     }
 
 //    models.drawModel(obj, 15, yAngle, 0, 1);
-    models.drawCompressedModel(vehicle, modelMap, fillCar, 15, yAngle, 0);
+    models.drawCompressedModel(vehicle, modelMap, fill, 15, yAngle, 0);
     sprites.drawSelfMasked(3, 16, left, 0);
     sprites.drawSelfMasked(93, 16, right, 0);
     sprites.drawSelfMasked(43, 56, name, 0);
