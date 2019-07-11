@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <thread>
+#include <chrono>
+using namespace std::chrono;
+
 #include "Models.h"
 
 extern Arduboy2Base arduboy;
@@ -166,6 +170,18 @@ void Models::drawModel(const float* model, int16_t xAngle, int16_t yAngle, int16
     drawModel(xAngle, yAngle, zAngle, color);
 }
 
+void debugWait()
+{
+#if 0
+            post();
+            system_clock::time_point wait = system_clock::now() + milliseconds(2);
+            while(system_clock::now() < wait)
+            {
+                std::this_thread::yield();
+            }
+#endif
+}
+
 void Models::drawCompressedModel(const uint8_t* model, const float* map, const uint8_t* fill, int16_t xAngle, int16_t yAngle, int16_t zAngle)
 {
     int16_t count = (int16_t)map[0];
@@ -175,6 +191,7 @@ void Models::drawCompressedModel(const uint8_t* model, const float* map, const u
     copy[0] = 3;
 
     bool reverse = (yAngle%360 < 90) || (yAngle%360 > 270);
+//    bool reverse = (yAngle%360 > 180);
     int16_t ndx = reverse ? 0: count-1;
     if(reverse)
     {
@@ -188,9 +205,11 @@ void Models::drawCompressedModel(const uint8_t* model, const float* map, const u
             copy[6] = map[pgm_read_byte(&model[ndx+5])];
             copy[7] = map[pgm_read_byte(&model[ndx+6])];
             copy[8] = map[pgm_read_byte(&model[ndx+7])];
-            copy[9] = map[pgm_read_byte(&model[ndx+8])]; 
+            copy[9] = map[pgm_read_byte(&model[ndx+8])];
+
             drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
             ndx+=9;
+            debugWait();
         }
     }
     else
@@ -207,11 +226,33 @@ void Models::drawCompressedModel(const uint8_t* model, const float* map, const u
             copy[7] = map[pgm_read_byte(&model[ndx-6])];
             copy[8] = map[pgm_read_byte(&model[ndx-7])];
             copy[9] = map[pgm_read_byte(&model[ndx-8])];
+
+            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
+            ndx-=9;
+            debugWait();
+        }
+    }
+/*
+    {
+//      (yAngle%360 < 180); x-axis order
+        while(ndx >= 0)
+        {
+            copy[1] = map[pgm_read_byte(&model[ndx-8])];
+            copy[2] = map[pgm_read_byte(&model[ndx-7])];
+            copy[3] = map[pgm_read_byte(&model[ndx-6])];
+            copy[4] = map[pgm_read_byte(&model[ndx-5])];
+            copy[5] = map[pgm_read_byte(&model[ndx-4])];
+            copy[6] = map[pgm_read_byte(&model[ndx-3])];
+            copy[7] = map[pgm_read_byte(&model[ndx-2])];
+            copy[8] = map[pgm_read_byte(&model[ndx-1])];
+            copy[9] = map[pgm_read_byte(&model[ndx])];
     
             drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
             ndx-=9;
+            debugWait();
         }
     }
+*/
 }
 
 void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
