@@ -13,8 +13,8 @@ struct Rect
     uint8_t height;
 };
 
-#define WIDTH 128
-#define HEIGHT 64
+#define WIDTH 256
+#define HEIGHT 128
 
 class Arduboy2Base
 {

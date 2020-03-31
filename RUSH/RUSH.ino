@@ -3,6 +3,7 @@
 #include "bike.h"
 #include "truck.h"
 #include "compressed.h"
+#include "cube.h"
 
 #include <Models.h>
 #include <Arduino.h>
@@ -143,10 +144,10 @@ void selection()
     switch(gSelection)
     {
         case 0:
-            vehicle = car;
-            modelMap = ndxToValueCar;
+            vehicle = cube;
+            modelMap = ndxToValueCube;
             name = overland;
-            fill = fillCar;
+            fill = fillCube;
             break;
         case 1:
             vehicle = truck;
@@ -203,19 +204,19 @@ void selection()
 
 //    models.drawModel(obj, 15, yAngle, 0, 1);
     models.drawCompressedModel(vehicle, modelMap, fill, 15, yAngle, 0);
-    sprites.drawSelfMasked(3, 16, left, 0);
-    sprites.drawSelfMasked(93, 16, right, 0);
-    sprites.drawSelfMasked(43, 56, name, 0);
+//    sprites.drawSelfMasked(3, 16, left, 0);
+//    sprites.drawSelfMasked(93, 16, right, 0);
+//    sprites.drawSelfMasked(43, 56, name, 0);
     yAngle++;
 
     if(arduboy.justPressed(LEFT_BUTTON))
     {
-        gSelection--;
+//        gSelection--;
     }
 
     if(arduboy.justPressed(RIGHT_BUTTON))
     {
-        gSelection++;
+ //       gSelection++;
     }
 
     if(arduboy.justPressed(A_BUTTON))
