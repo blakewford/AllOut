@@ -141,6 +141,7 @@ void selection()
     uint8_t* vehicle = nullptr;
     uint8_t* name = nullptr;
     uint8_t* fill = nullptr;
+    uint8_t* order = nullptr;
     switch(gSelection)
     {
         case 0:
@@ -148,6 +149,7 @@ void selection()
             modelMap = ndxToValueCube;
             name = overland;
             fill = fillCube;
+            order = orderCube;
             break;
         case 1:
             vehicle = truck;
@@ -203,7 +205,7 @@ void selection()
 #endif
 
 //    models.drawModel(obj, 15, yAngle, 0, 1);
-    models.drawCompressedModel(vehicle, modelMap, fill, 15, yAngle, 0);
+    models.drawCompressedModel(vehicle, modelMap, fill, order, 15, yAngle, 0);
 //    sprites.drawSelfMasked(3, 16, left, 0);
 //    sprites.drawSelfMasked(93, 16, right, 0);
 //    sprites.drawSelfMasked(43, 56, name, 0);

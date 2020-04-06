@@ -13,6 +13,19 @@ extern Arduboy2Base arduboy;
 
 uint16_t gReportedVerts = 0;
 
+struct point
+{
+    int16_t x;
+    int16_t y;
+};
+
+struct triangle
+{
+    point a;
+    point b;
+    point c;
+};
+
 void init()
 {
     if(SDL_Init() < 0) return;
@@ -28,6 +41,11 @@ inline void loop();
 
 void Arduboy2Audio::begin()
 {
+}
+
+void fillTriangle(triangle t, uint8_t color)
+{
+    arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, color);
 }
 
 void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, uint8_t color)

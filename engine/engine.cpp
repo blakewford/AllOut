@@ -11,7 +11,7 @@ using namespace std::chrono;
 #include "RUSH/RUSH.ino"
 
 bool gKeepGoing = true;
-const int32_t SCALE = 1;
+const int32_t SCALE = 2;
 float SCREEN_DATA[WIDTH*HEIGHT];
 
 struct pgm
@@ -422,9 +422,9 @@ void Arduboy2Base::drawPixel(int16_t x, int16_t y, uint8_t color)
     setPixel(gScreen, x, y, color);
 }
 
-void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint8_t w, uint8_t color)
+void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t color)
 {
-    uint8_t x2 = x + w;
+    int16_t x2 = x + w;
     while(x <= x2)
     {
         Arduboy2Base::drawPixel(x, y, color);

@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <map>
+#include <vector>
 #include <thread>
 #include <chrono>
 using namespace std::chrono;
@@ -122,7 +124,7 @@ struct vertex
     float z;
 };
 
-float copy[40];
+float copy[256];
 
 param Models::s_Ortho;
 param Models::s_zAngle;
@@ -161,13 +163,6 @@ void Models::begin()
 
 void Models::drawModel(const float* model, int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t color)
 {
-    int16_t count = (int16_t)model[0];
-    count*=3;
-    gReportedVerts += count;
-
-    count++;
-    memcpy(copy, model, count*sizeof(float));
-    drawModel(xAngle, yAngle, zAngle, color);
 }
 
 void debugWait()
@@ -182,34 +177,23 @@ void debugWait()
 #endif
 }
 
-void Models::drawCompressedModel(const uint8_t* model, const float* map, const uint8_t* fill, int16_t xAngle, int16_t yAngle, int16_t zAngle)
+void Models::drawCompressedModel(const uint8_t* model, const float* map, const uint8_t* fill, const int8_t* order, int16_t xAngle, int16_t yAngle, int16_t zAngle)
 {
     int16_t count = (int16_t)map[0];
+    copy[0] = count;
     count*=3;
+
     gReportedVerts += count;
 
-    copy[0] = 3;
-
     bool reverse = (yAngle%360 < 90) || (yAngle%360 > 270);
-//    bool reverse = (yAngle%360 > 180);
+
+    int16_t current = 1;
     int16_t ndx = reverse ? 0: count-1;
     if(reverse)
     {
         while(ndx < count)
         {
-            copy[1] = map[pgm_read_byte(&model[ndx])];
-            copy[2] = map[pgm_read_byte(&model[ndx+1])];
-            copy[3] = map[pgm_read_byte(&model[ndx+2])];
-            copy[4] = map[pgm_read_byte(&model[ndx+3])];
-            copy[5] = map[pgm_read_byte(&model[ndx+4])];
-            copy[6] = map[pgm_read_byte(&model[ndx+5])];
-            copy[7] = map[pgm_read_byte(&model[ndx+6])];
-            copy[8] = map[pgm_read_byte(&model[ndx+7])];
-            copy[9] = map[pgm_read_byte(&model[ndx+8])];
-
-            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
-            ndx+=9;
-            debugWait();
+            copy[current++] = map[pgm_read_byte(&model[ndx++])];
         }
     }
     else
@@ -217,42 +201,12 @@ void Models::drawCompressedModel(const uint8_t* model, const float* map, const u
         yAngle += 270;
         while(ndx >= 0)
         {
-            copy[1] = map[pgm_read_byte(&model[ndx])];
-            copy[2] = map[pgm_read_byte(&model[ndx-1])];
-            copy[3] = map[pgm_read_byte(&model[ndx-2])];
-            copy[4] = map[pgm_read_byte(&model[ndx-3])];
-            copy[5] = map[pgm_read_byte(&model[ndx-4])];
-            copy[6] = map[pgm_read_byte(&model[ndx-5])];
-            copy[7] = map[pgm_read_byte(&model[ndx-6])];
-            copy[8] = map[pgm_read_byte(&model[ndx-7])];
-            copy[9] = map[pgm_read_byte(&model[ndx-8])];
+            copy[current++] = map[pgm_read_byte(&model[ndx--])];
+        }
+    }
 
-            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
-            ndx-=9;
-            debugWait();
-        }
-    }
-/*
-    {
-//      (yAngle%360 < 180); x-axis order
-        while(ndx >= 0)
-        {
-            copy[1] = map[pgm_read_byte(&model[ndx-8])];
-            copy[2] = map[pgm_read_byte(&model[ndx-7])];
-            copy[3] = map[pgm_read_byte(&model[ndx-6])];
-            copy[4] = map[pgm_read_byte(&model[ndx-5])];
-            copy[5] = map[pgm_read_byte(&model[ndx-4])];
-            copy[6] = map[pgm_read_byte(&model[ndx-3])];
-            copy[7] = map[pgm_read_byte(&model[ndx-2])];
-            copy[8] = map[pgm_read_byte(&model[ndx-1])];
-            copy[9] = map[pgm_read_byte(&model[ndx])];
-    
-            drawModel(xAngle, yAngle, zAngle, fill[ndx/3]);
-            ndx-=9;
-            debugWait();
-        }
-    }
-*/
+    drawModel(xAngle, yAngle, zAngle, fill, order);
+    debugWait();
 }
 
 void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
@@ -276,7 +230,7 @@ void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
     }
 }
 
-void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t color)
+void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order)
 {
 
     modifyAngle(yAngle, Y);
@@ -317,23 +271,63 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t c
         memcpy(&copy[start], &L[0], 3*sizeof(float));
     }
 
-    int8_t offsetX = WIDTH/2;
-    int8_t offsetY = HEIGHT/2;
+    int16_t offsetX = WIDTH/2;
+    int16_t offsetY = HEIGHT/2;
 
     current = 1;
     count = (int16_t)copy[0];
-    while(current < count*3)
+
+    int32_t ndx = 0;
+    std::vector<triangle> temp;
+    std::map<int32_t, triangle> triangles;
+
+    int32_t total = count*3;
+    while(current < total)
     {
-        int16_t x1 = copy[current++] + offsetX;
-        int16_t y1 = copy[current++] + offsetY;
+        triangle t;
+        t.a.x = copy[current++] + offsetX;
+        t.a.y = copy[current++] + offsetY;
         current++;
-        int16_t x2 = copy[current++] + offsetX;
-        int16_t y2 = copy[current++] + offsetY;
+        t.b.x = copy[current++] + offsetX;
+        t.b.y = copy[current++] + offsetY;
         current++;
-        int16_t x3 = copy[current++] + offsetX;
-        int16_t y3 = copy[current++] + offsetY;
+        t.c.x = copy[current++] + offsetX;
+        t.c.y = copy[current++] + offsetY;
         current++;
 
-        fillTriangle(x1, y1, x2, y2, x3, y3, color);
-    }  
+        temp.push_back(t);
+    }
+
+    for(std::vector<triangle>::iterator i = temp.begin(); i != temp.end(); i++)
+    {
+        int32_t j = 0;
+        if(-1 != -1)
+        {
+            triangles.insert(std::make_pair(order[j], *i));
+        }      
+    }
+
+    for(std::vector<triangle>::iterator i = temp.begin(); i != temp.end(); i++)
+    {
+        if(triangles.find(ndx) != triangles.end())
+        {
+            while(triangles.find(ndx) != triangles.end())
+            {
+               ndx++;
+            }
+        }
+
+        int32_t j = 0;
+        if(-1 == -1)
+        {
+            triangles.insert(std::make_pair(ndx, *i));
+        }       
+    }
+
+    ndx = triangles.size();
+
+    while(ndx--)
+    {
+        fillTriangle(triangles[ndx], 1);
+    }
 }
