@@ -124,7 +124,7 @@ struct vertex
     float z;
 };
 
-float copy[256];
+float copy[1024];
 
 param Models::s_Ortho;
 param Models::s_zAngle;
@@ -205,7 +205,7 @@ void Models::drawCompressedModel(const uint8_t* model, const float* map, const u
         }
     }
 
-    drawModel(xAngle, yAngle, zAngle, fill, order);
+    drawModel(xAngle, yAngle, zAngle, fill, order, reverse);
     debugWait();
 }
 
@@ -230,7 +230,7 @@ void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
     }
 }
 
-void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order)
+void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order, bool reverse)
 {
 
     modifyAngle(yAngle, Y);
@@ -277,7 +277,6 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     current = 1;
     count = (int16_t)copy[0];
 
-    int32_t ndx = 0;
     std::vector<triangle> temp;
     std::map<int32_t, triangle> triangles;
 
@@ -285,6 +284,14 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     while(current < total)
     {
         triangle t;
+
+        if (!reverse)
+        {
+           int32_t i = (current-1)/3;
+           t.color = color[i];
+           t.order = order[i];
+        }
+
         t.a.x = copy[current++] + offsetX;
         t.a.y = copy[current++] + offsetY;
         current++;
@@ -295,18 +302,25 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         t.c.y = copy[current++] + offsetY;
         current++;
 
+        if (reverse)
+        {
+           int32_t i = (total - (current-1))/3;
+           t.color = color[i];
+           t.order = order[i];
+        }
+
         temp.push_back(t);
     }
 
     for(std::vector<triangle>::iterator i = temp.begin(); i != temp.end(); i++)
     {
-        int32_t j = 0;
-        if(-1 != -1)
+        if(i->order != -1)
         {
-            triangles.insert(std::make_pair(order[j], *i));
-        }      
+            triangles.insert(std::make_pair(i->order, *i));
+        }
     }
 
+    int32_t ndx = 0;
     for(std::vector<triangle>::iterator i = temp.begin(); i != temp.end(); i++)
     {
         if(triangles.find(ndx) != triangles.end())
@@ -317,17 +331,16 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
             }
         }
 
-        int32_t j = 0;
-        if(-1 == -1)
+        if(i->order == -1)
         {
             triangles.insert(std::make_pair(ndx, *i));
-        }       
+        }   
     }
 
-    ndx = triangles.size();
-
-    while(ndx--)
+    int32_t z = 0;
+    while(z < triangles.size())
     {
-        fillTriangle(triangles[ndx], 1);
+        fillTriangle(triangles[z]);
+        z++;
     }
 }

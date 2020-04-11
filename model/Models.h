@@ -40,7 +40,7 @@ private:
     static param s_Ortho;
     static param s_zAngle;
 
-    static void drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order);
+    static void drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order, bool reverse);
     static void modifyAngle(const int16_t angle, const rotation_axis axis);
     static void modifyXAngle();
 };

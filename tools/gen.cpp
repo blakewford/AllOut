@@ -424,5 +424,15 @@ int main(int argc, char** argv)
         texture = nullptr;
     }
 
+    printf("\n");
+    printf("const uint8_t PROGMEM order[] =\n{\n");
+
+    int32_t i = 0;
+    while(i < size)
+    {
+        printf("    %d,\n", -1);
+        i++;
+    }
+
     printf("};\n");
 }
