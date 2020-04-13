@@ -379,7 +379,7 @@ int main(int argc, char** argv)
     printf("\n");
     printf("const uint8_t PROGMEM fill[] =\n{\n");
 
-    float dim = 225;
+    float dim = 224; //Prevent padding with proper alignment
 
     FILE* skin = nullptr;
     if(cachedArgc > 2) skin = fopen(cachedArgv[2],"rb");

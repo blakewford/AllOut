@@ -30,8 +30,8 @@ public:
         void clear();
         void display();
 static  void drawPixel(int16_t x, int16_t y, uint8_t color = 1);
-        void drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t color = 1);
-        void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, uint8_t color = 1);
+        void drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t color, uintptr_t texture);
+        void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, uint8_t color, uintptr_t texture);
 
         Arduboy2Audio audio;
 };

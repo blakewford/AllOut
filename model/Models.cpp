@@ -17,7 +17,7 @@ using namespace std::chrono;
 extern Arduboy2Base arduboy;
 extern uint16_t gReportedVerts;
 
-//#define USE_TEXTURE
+#define USE_TEXTURE
 
 enum parse_state: int8_t
 {
@@ -234,6 +234,7 @@ void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
 
 void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order, bool reverse)
 {
+    uint8_t* binary = nullptr;
     uint8_t* nextColor = nullptr;
 
 #ifdef USE_TEXTURE
@@ -243,7 +244,7 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         fseek(skin, 0, SEEK_END);
         int32_t size = ftell(skin);
         rewind(skin);
-        uint8_t* binary = (uint8_t*)malloc(size);
+        binary = (uint8_t*)malloc(size);
         size_t read = fread(binary, 1, size, skin);
         if(read != size) return -1;
         fclose(skin);
@@ -255,7 +256,7 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         }
         else
         {
-            nextColor += size -1; // EOF
+            nextColor += size; // EOF
         }
     }
 #endif
@@ -318,7 +319,10 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
            t.color = color[i];
            t.order = order[i];
 #ifdef USE_TEXTURE
-           nextColor -= fillTriangle(t, true)*3;
+           if(skin)
+           {
+               nextColor -= TEXTURE_BIT_DEPTH/sizeof(uint8_t);
+           }
 #endif
            t.texture = nextColor;
         }
@@ -340,7 +344,10 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
            t.order = order[i];
            t.texture = nextColor;
 #ifdef USE_TEXTURE
-           nextColor += fillTriangle(t, true)*3;
+           if(skin)
+           {
+               nextColor += TEXTURE_BIT_DEPTH/sizeof(uint8_t);
+           }
 #endif
         }
 

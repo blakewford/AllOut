@@ -127,7 +127,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
 	next2:
         if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
         if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-        arduboy.drawFastHLine(minx, y, maxx-minx, color);
+        arduboy.drawFastHLine(minx, y, maxx-minx, color, 0);
         if(!changed1) t1x += signx1;
         t1x+=t1xp;
         if(!changed2) t2x += signx2;
@@ -194,7 +194,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
 	next4:
         if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
         if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-        arduboy.drawFastHLine(minx, y, maxx-minx, color);
+        arduboy.drawFastHLine(minx, y, maxx-minx, color, 0);
 
         if(!changed1) t1x += signx1;
         t1x += t1xp;
@@ -208,5 +208,5 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
 
 void fillTriangle(triangle t)
 {
-    arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color);
+    arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color, t.texture);
 }

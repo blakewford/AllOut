@@ -5,6 +5,7 @@
 #include <Arduboy2.h>
 
 const uint8_t BUFFER_SIZE = 16;
+const uint8_t TEXTURE_BIT_DEPTH = 24;
 
 struct param
 {
