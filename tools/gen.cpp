@@ -379,31 +379,13 @@ int main(int argc, char** argv)
     printf("\n");
     printf("const uint8_t PROGMEM fill[] =\n{\n");
 
-    float dim = ceil(sqrt(size)) + 2;
-    ((int)dim%2) == 0 ? dim: dim++;
-    dim*=5;
+    float dim = 225;
 
     FILE* skin = nullptr;
     if(cachedArgc > 2) skin = fopen(cachedArgv[2],"rb");
     if(skin)
     {
-        fseek(skin, 0, SEEK_END);
-        int32_t size = ftell(skin);
-        rewind(skin);
-        uint8_t* binary = (uint8_t*)malloc(size);
-        size_t read = fread(binary, 1, size, skin);
-        if(read != size) return -1;
-        fclose(skin);
 
-        int32_t offsetX = 0;
-        int32_t offsetY = 0;
-        int32_t pixelOffset = binary[BEGINPXLOFFSET];
-        const int32_t middle = ((size - pixelOffset)/2) + pixelOffset + (2*(dim*4)) + (dim*2) + 4;
-
-        spiral(binary, middle, dim, requiredTiles);
-
-        free(binary);
-        binary = nullptr;
     }
     else
     {
@@ -414,10 +396,10 @@ int main(int argc, char** argv)
             i++;
         }
 
-        int32_t dataSize = 54 + (dim*dim*4);
+        int32_t dataSize = 54 + (dim*dim*3);
         uint8_t* texture = new uint8_t[dataSize];
 
-        memset(texture, 0 , dataSize);
+        memset(texture, 0xFF, dataSize);
         generateTexture(texture, dim, dim);
 
         delete[] texture;

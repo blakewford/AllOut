@@ -17,6 +17,8 @@ using namespace std::chrono;
 extern Arduboy2Base arduboy;
 extern uint16_t gReportedVerts;
 
+//#define USE_TEXTURE
+
 enum parse_state: int8_t
 {
     CONSTANTS,
@@ -232,6 +234,31 @@ void Models::modifyAngle(const int16_t angle, const rotation_axis axis)
 
 void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* color, int8_t* order, bool reverse)
 {
+    uint8_t* nextColor = nullptr;
+
+#ifdef USE_TEXTURE
+    FILE* skin = fopen("./tools/skin.bmp","rb");
+    if(skin)
+    {
+        fseek(skin, 0, SEEK_END);
+        int32_t size = ftell(skin);
+        rewind(skin);
+        uint8_t* binary = (uint8_t*)malloc(size);
+        size_t read = fread(binary, 1, size, skin);
+        if(read != size) return -1;
+        fclose(skin);
+
+        nextColor = binary;
+        if(reverse)
+        {
+            nextColor += 54; // Bitmap header size
+        }
+        else
+        {
+            nextColor += size -1; // EOF
+        }
+    }
+#endif
 
     modifyAngle(yAngle, Y);
     modifyAngle(xAngle, X);
@@ -290,6 +317,10 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
            int32_t i = (current-1)/3;
            t.color = color[i];
            t.order = order[i];
+#ifdef USE_TEXTURE
+           nextColor -= fillTriangle(t, true)*3;
+#endif
+           t.texture = nextColor;
         }
 
         t.a.x = copy[current++] + offsetX;
@@ -307,6 +338,10 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
            int32_t i = (total - (current-1))/3;
            t.color = color[i];
            t.order = order[i];
+           t.texture = nextColor;
+#ifdef USE_TEXTURE
+           nextColor += fillTriangle(t, true)*3;
+#endif
         }
 
         temp.push_back(t);
@@ -343,4 +378,12 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         fillTriangle(triangles[z]);
         z++;
     }
+
+#ifdef USE_TEXTURE
+    if(skin)
+    {
+        free(binary);
+        binary = nullptr;
+    }
+#endif
 }

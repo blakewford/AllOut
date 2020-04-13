@@ -26,6 +26,7 @@ struct triangle
     point c;
     uint8_t color;
     int8_t order;
+    uintptr_t texture;
 };
 
 void init()

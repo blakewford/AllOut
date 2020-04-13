@@ -417,6 +417,26 @@ void Arduboy2Base::display()
 //    writeImage(gScreen, "test.pgm");
 }
 
+uint8_t getBitmapColor(const uint8_t* bitmap)
+{
+    int32_t skinColor = bitmap[2] << 16| bitmap[1] << 8 | bitmap[0];
+
+    int8_t ndx = -1;
+    int32_t leastDiff = 0x7FFFFFFF;
+    int32_t numColors = sizeof(color)/sizeof(int32_t);
+    while(numColors--)
+    {
+        int32_t diff = std::abs(skinColor - color[numColors]);
+        if(diff < leastDiff)
+        {
+            leastDiff = diff;
+            ndx = numColors;
+        }
+    }
+
+    return ndx;
+}
+
 void Arduboy2Base::drawPixel(int16_t x, int16_t y, uint8_t color)
 {
     setPixel(gScreen, x, y, color);
