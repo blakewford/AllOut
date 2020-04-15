@@ -27,6 +27,7 @@ struct triangle
     uint8_t color;
     int8_t order;
     uintptr_t texture;
+    bool render;
 };
 
 void init()
@@ -48,6 +49,8 @@ void Arduboy2Audio::begin()
 
 void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3, uint8_t color)
 {
+    uintptr_t texture = 0; // Always empty for this path
+
 // Fill a triangle - Bresenham method
 // Original from http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
     uint8_t e1,e2;
@@ -127,7 +130,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
 	next2:
         if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
         if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-        arduboy.drawFastHLine(minx, y, maxx-minx, color, 0);
+        arduboy.drawFastHLine(minx, y, maxx-minx, color, texture);
         if(!changed1) t1x += signx1;
         t1x+=t1xp;
         if(!changed2) t2x += signx2;
@@ -194,7 +197,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
 	next4:
         if(minx>t1x) minx=t1x; if(minx>t2x) minx=t2x;
         if(maxx<t1x) maxx=t1x; if(maxx<t2x) maxx=t2x;
-        arduboy.drawFastHLine(minx, y, maxx-minx, color, 0);
+        arduboy.drawFastHLine(minx, y, maxx-minx, color, texture);
 
         if(!changed1) t1x += signx1;
         t1x += t1xp;
@@ -206,7 +209,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
     }
 }
 
-void fillTriangle(triangle t)
+int32_t fillTriangle(triangle t)
 {
-    arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color, t.texture);
+    return arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color, t.texture, t.render);
 }

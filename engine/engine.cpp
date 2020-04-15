@@ -442,7 +442,7 @@ void Arduboy2Base::drawPixel(int16_t x, int16_t y, uint8_t color)
     setPixel(gScreen, x, y, color);
 }
 
-void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t fill, uintptr_t texture)
+void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t fill, uintptr_t& texture)
 {
     uint8_t color = fill;
 
@@ -455,13 +455,18 @@ void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t fill,
         }
         Arduboy2Base::drawPixel(x, y, color);
         x++;
+        if(texture != 0)
+        {
+            texture += (TEXTURE_BIT_DEPTH/BITS_PER_BYTE);
+        }
     }
 }
 
 // Original source available here: https://github.com/MLXXXp/Arduboy2 2/11/2019
-void Arduboy2Base::fillTriangle
-(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color, uintptr_t texture)
+int32_t Arduboy2Base::fillTriangle
+(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color, uintptr_t texture, bool render)
 {
+  int32_t pixels = 0;
 
   int16_t a, b, y, last;
   // Sort coordinates by Y order (y2 >= y1 >= y0)
@@ -497,8 +502,15 @@ void Arduboy2Base::fillTriangle
     {
       b = x2;
     }
-    drawFastHLine(a, y0, b-a+1, color, texture);
-    return;
+
+    uint16_t width = b-a+1;
+    pixels += width;
+    if(render)
+    {
+        drawFastHLine(a, y0, width, color, texture);
+    }
+
+    return pixels;
   }
 
   int16_t dx01 = x1 - x0,
@@ -538,7 +550,12 @@ void Arduboy2Base::fillTriangle
       std::swap(a,b);
     }
 
-    drawFastHLine(a, y, b-a+1, color, texture);
+    uint16_t width = b-a+1;
+    pixels += width;
+    if(render)
+    {
+        drawFastHLine(a, y, width, color, texture);
+    }
   }
 
   // For lower part of triangle, find scanline crossings for segments
@@ -558,8 +575,15 @@ void Arduboy2Base::fillTriangle
       std::swap(a,b);
     }
 
-    drawFastHLine(a, y, b-a+1, color, texture);
+    uint16_t width = b-a+1;
+    pixels += width;
+    if(render)
+    {
+        drawFastHLine(a, y, width, color, texture);
+    }
   }
+
+   return pixels;
 }
 
 ArduboyTones::ArduboyTones(bool (*outEn)())

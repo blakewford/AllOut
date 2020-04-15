@@ -312,19 +312,13 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     while(current < total)
     {
         triangle t;
+        t.render = false;
 
         if (!reverse)
         {
            int32_t i = (current-1)/3;
            t.color = color[i];
            t.order = order[i];
-#ifdef USE_TEXTURE
-           if(skin)
-           {
-               nextColor -= TEXTURE_BIT_DEPTH/sizeof(uint8_t);
-           }
-#endif
-           t.texture = nextColor;
         }
 
         t.a.x = copy[current++] + offsetX;
@@ -346,9 +340,21 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
 #ifdef USE_TEXTURE
            if(skin)
            {
-               nextColor += TEXTURE_BIT_DEPTH/sizeof(uint8_t);
+               int32_t pixels = fillTriangle(t);
+               nextColor += (TEXTURE_BIT_DEPTH/BITS_PER_BYTE)*pixels;
            }
 #endif
+        }
+        else
+        {
+#ifdef USE_TEXTURE
+           if(skin)
+           {
+               int32_t pixels = fillTriangle(t);
+               nextColor -= (TEXTURE_BIT_DEPTH/BITS_PER_BYTE)*pixels;
+           }
+#endif
+           t.texture = nextColor;
         }
 
         temp.push_back(t);
@@ -382,7 +388,9 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     int32_t z = 0;
     while(z < triangles.size())
     {
-        fillTriangle(triangles[z]);
+        triangle* p = &triangles[z];
+        p->render = true;
+        fillTriangle(*p);
         z++;
     }
 

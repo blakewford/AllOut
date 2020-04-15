@@ -6,6 +6,7 @@
 
 const uint8_t BUFFER_SIZE = 16;
 const uint8_t TEXTURE_BIT_DEPTH = 24;
+const uint8_t BITS_PER_BYTE = 8;
 
 struct param
 {
