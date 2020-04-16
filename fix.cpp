@@ -27,7 +27,6 @@ struct triangle
     uint8_t color;
     int8_t order;
     uintptr_t texture;
-    bool render;
 };
 
 void init()
@@ -209,7 +208,7 @@ void fillTriangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, in
     }
 }
 
-int32_t fillTriangle(triangle t)
+void fillTriangle(triangle t)
 {
-    return arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color, t.texture, t.render);
+    arduboy.fillTriangle(t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y, t.color, t.texture);
 }

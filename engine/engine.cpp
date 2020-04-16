@@ -463,11 +463,9 @@ void Arduboy2Base::drawFastHLine(int16_t x, int16_t y, uint16_t w, uint8_t fill,
 }
 
 // Original source available here: https://github.com/MLXXXp/Arduboy2 2/11/2019
-int32_t Arduboy2Base::fillTriangle
-(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color, uintptr_t texture, bool render)
+void Arduboy2Base::fillTriangle
+(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color, uintptr_t texture)
 {
-  int32_t pixels = 0;
-
   int16_t a, b, y, last;
   // Sort coordinates by Y order (y2 >= y1 >= y0)
   if (y0 > y1)
@@ -503,14 +501,8 @@ int32_t Arduboy2Base::fillTriangle
       b = x2;
     }
 
-    uint16_t width = b-a+1;
-    pixels += width;
-    if(render)
-    {
-        drawFastHLine(a, y0, width, color, texture);
-    }
-
-    return pixels;
+    drawFastHLine(a, y0, b-a+1, color, texture);
+    return;
   }
 
   int16_t dx01 = x1 - x0,
@@ -550,12 +542,7 @@ int32_t Arduboy2Base::fillTriangle
       std::swap(a,b);
     }
 
-    uint16_t width = b-a+1;
-    pixels += width;
-    if(render)
-    {
-        drawFastHLine(a, y, width, color, texture);
-    }
+    drawFastHLine(a, y, b-a+1, color, texture);
   }
 
   // For lower part of triangle, find scanline crossings for segments
@@ -575,15 +562,10 @@ int32_t Arduboy2Base::fillTriangle
       std::swap(a,b);
     }
 
-    uint16_t width = b-a+1;
-    pixels += width;
-    if(render)
-    {
-        drawFastHLine(a, y, width, color, texture);
-    }
+    drawFastHLine(a, y, b-a+1, color, texture);
   }
 
-   return pixels;
+   return;
 }
 
 ArduboyTones::ArduboyTones(bool (*outEn)())

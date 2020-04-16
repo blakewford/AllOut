@@ -13,6 +13,7 @@
 using namespace std::chrono;
 
 #include "Models.h"
+#include "../tools/bmpconstants.h"
 
 extern Arduboy2Base arduboy;
 extern uint16_t gReportedVerts;
@@ -249,15 +250,7 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         if(read != size) return -1;
         fclose(skin);
 
-        nextColor = binary;
-        if(reverse)
-        {
-            nextColor += 54; // Bitmap header size
-        }
-        else
-        {
-            nextColor += size; // EOF
-        }
+        nextColor = binary + HEADERSIZE; // Bitmap header size
     }
 #endif
 
@@ -312,13 +305,17 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     while(current < total)
     {
         triangle t;
-        t.render = false;
+        t.texture = 0;
 
-        if (!reverse)
+        if(!reverse)
         {
            int32_t i = (current-1)/3;
            t.color = color[i];
            t.order = order[i];
+           if(skin)
+           {
+//               t.texture = nextColor + texture[i/3];
+           }
         }
 
         t.a.x = copy[current++] + offsetX;
@@ -331,30 +328,15 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
         t.c.y = copy[current++] + offsetY;
         current++;
 
-        if (reverse)
+        if(reverse)
         {
            int32_t i = (total - (current-1))/3;
            t.color = color[i];
            t.order = order[i];
-           t.texture = nextColor;
-#ifdef USE_TEXTURE
            if(skin)
            {
-               int32_t pixels = fillTriangle(t);
-               nextColor += (TEXTURE_BIT_DEPTH/BITS_PER_BYTE)*pixels;
+//               t.texture = nextColor + texture[i/3];
            }
-#endif
-        }
-        else
-        {
-#ifdef USE_TEXTURE
-           if(skin)
-           {
-               int32_t pixels = fillTriangle(t);
-               nextColor -= (TEXTURE_BIT_DEPTH/BITS_PER_BYTE)*pixels;
-           }
-#endif
-           t.texture = nextColor;
         }
 
         temp.push_back(t);
@@ -389,7 +371,6 @@ void Models::drawModel(int16_t xAngle, int16_t yAngle, int16_t zAngle, uint8_t* 
     while(z < triangles.size())
     {
         triangle* p = &triangles[z];
-        p->render = true;
         fillTriangle(*p);
         z++;
     }

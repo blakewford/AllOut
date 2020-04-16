@@ -43,8 +43,25 @@ bool lowerZOrder(triangle a, triangle b)
     return ((a.a->z + a.b->z + a.c->z)/3) < ((b.a->z + b.b->z + b.c->z)/3);
 }
 
-void reorder(std::vector<float>& verts)
+float distance(point* a, point* b)
 {
+    return sqrt(std::pow(b->x-a->x, 2) + std::pow(b->y-a->y, 2) + std::pow(b->z-a->z, 2));
+}
+
+int32_t triangleArea(triangle t)
+{
+    float a = distance(t.a, t.b);
+    float b = distance(t.b, t.c);
+    float c = distance(t.c, t.a);
+
+    float s = (a+b+c)/2;
+    return sqrt(s*(s-a)*(s-b)*(s-c));
+}
+
+int32_t reorder(std::vector<float>& verts, std::vector<int32_t>& areas)
+{
+    int32_t totalArea = 0;
+
     std::ifstream sample(cachedArgc > 1 ? cachedArgv[1]: DEFAULT_MODEL);
     std::vector<triangle> triangles;
 
@@ -110,7 +127,13 @@ void reorder(std::vector<float>& verts)
         verts.push_back(iter->c->x);
         verts.push_back(iter->c->y);
         verts.push_back(iter->c->z);
+
+        areas.push_back(triangleArea(*iter));
+        totalArea += areas.back();
+        printf("%lld\n", totalArea);
     }
+
+    return totalArea;
 }
 
 void printHeader()
@@ -217,12 +240,12 @@ int32_t compressed(std::vector<float>& verts)
 
 void generateTexture(uint8_t* texture, int32_t width, int32_t height)
 {
-    const int16_t depth = 32;
+    const int16_t depth = 24;
     const int16_t planes = 1;
     const int32_t offset = 54;
     const int32_t remaining = 40;
     const int32_t resolution = 2835;
-    const int32_t dataSize = ((width*height)*4);
+    const int32_t dataSize = ((width*height)*3);
     const int32_t headerHeight = -height;
 
     int32_t size = dataSize + offset;
@@ -271,92 +294,6 @@ void generateTexture(uint8_t* texture, int32_t width, int32_t height)
     fclose(file);
 }
 
-void printBitmapColor(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t offsetX, int32_t offsetY)
-{
-    int32_t start = middle + (offsetX*4)*5 + ((dim*4)*offsetY)*5;
-    int32_t skinColor = bitmap[start+3] << 16 | bitmap[start+2] << 8 | bitmap[start+1];
-
-    int32_t ndx = -1;
-    int32_t leastDiff = 0x7FFFFFFF;
-    int32_t numColors = sizeof(color)/sizeof(int32_t);
-    while(numColors--)
-    {
-        int32_t diff = std::abs(skinColor - color[numColors]);
-        if(diff < leastDiff)
-        {
-            leastDiff = diff;
-            ndx = numColors;
-        }
-    }
-
-    printf("    %d,\n", ndx);
-}
-
-void spiral(const uint8_t* bitmap, int32_t middle, int32_t dim, int32_t total)
-{
-    int32_t offsetX = 0;
-    int32_t offsetY = 0;
-    int32_t tempX = 1;
-    int32_t tempY = 1;
-
-    while(total > 0)
-    {
-//        printf("RIGHT\n");
-        offsetX++;
-        tempY--;
-
-        while(total > 0 && tempX <= offsetX)
-        {
-            printBitmapColor(bitmap, middle, dim, tempX, tempY);
-            total--;
-            tempX++;
-        }
-
-//        printf("UP\n");
-        tempX--;
-        tempY--;
-        offsetY++;
-        offsetY = -offsetY;
-        while(total > 0 && tempY >= offsetY)
-        {
-            printBitmapColor(bitmap, middle, dim, tempX, tempY);
-            total--;
-            tempY--;
-        }
-
-//        printf("LEFT\n");
-
-        tempX = offsetX;
-        tempX--;
-        offsetX++;
-        offsetX = -offsetX;
-        while(total > 0 && tempX > offsetX)
-        {
-            printBitmapColor(bitmap, middle, dim, tempX, offsetY);
-            total--;
-            tempX--;
-        }
-
-//        printf("DOWN\n");
-
-        tempX++;
-        tempY = offsetY;
-        tempY++;
-        offsetY = -offsetY;
-        offsetY++;
-        while(total > 0 && tempY < offsetY)
-        {
-            printBitmapColor(bitmap, middle, dim, tempX, tempY);
-            total--;
-            tempY++;
-        }
-        offsetX = -offsetX;
-        offsetX--;
-        offsetY--;
-        tempX++;
-    }
-}
-
 int main(int argc, char** argv)
 {
     cachedArgc = argc;
@@ -370,7 +307,8 @@ int main(int argc, char** argv)
     }
 
     std::vector<float> verts;
-    reorder(verts);
+    std::vector<int32_t> areas;
+    int32_t area = reorder(verts, areas);
 
 //    uncompressed();
     int32_t size = compressed(verts);
@@ -379,7 +317,8 @@ int main(int argc, char** argv)
     printf("\n");
     printf("const uint8_t PROGMEM fill[] =\n{\n");
 
-    float dim = 224; //Prevent padding with proper alignment
+    int32_t dim = sqrt(area); //Prevent padding with proper alignment
+    dim += dim%3;
 
     FILE* skin = nullptr;
     if(cachedArgc > 2) skin = fopen(cachedArgv[2],"rb");
@@ -413,6 +352,20 @@ int main(int argc, char** argv)
     while(i < size)
     {
         printf("    %d,\n", -1);
+        i++;
+    }
+
+    printf("};\n");
+
+    printf("\n");
+    printf("const uint8_t PROGMEM texture[] =\n{\n");
+
+    i = 0;
+    int32_t nextColor = 0;
+    while(i < areas.size())
+    {
+        nextColor += areas[i]*3;
+        printf("    %d,\n", nextColor);
         i++;
     }
 
